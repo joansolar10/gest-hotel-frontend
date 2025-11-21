@@ -42,7 +42,6 @@ export const ConfirmationPage: React.FC = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* Header */}
       <div style={{ 
         backgroundColor: '#10b981', 
         color: 'white', 
@@ -64,7 +63,6 @@ export const ConfirmationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Contenido */}
       <div style={{ 
         maxWidth: '600px', 
         margin: '2rem auto', 
@@ -101,7 +99,6 @@ export const ConfirmationPage: React.FC = () => {
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Botón de descarga de PDF */}
             <button
               onClick={handleDownloadPDF}
               disabled={downloadingPDF}
@@ -153,7 +150,7 @@ export const ConfirmationPage: React.FC = () => {
             </button>
 
             <button
-              onClick={() => navigate(`/reservations/${id}`)}
+              onClick={() => navigate('/my-reservations')}
               style={{
                 padding: '0.75rem 1.5rem',
                 backgroundColor: '#2563eb',
@@ -196,7 +193,6 @@ export const ConfirmationPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Información adicional */}
         <div style={{ 
           backgroundColor: '#eff6ff', 
           borderRadius: '8px', 
@@ -215,7 +211,6 @@ export const ConfirmationPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Animación de spin */}
       <style>{`
         @keyframes spin {
           from {

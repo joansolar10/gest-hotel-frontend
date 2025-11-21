@@ -8,10 +8,15 @@ interface Reservation {
   id: string;
   total_amount: number;
   status: string;
+  check_in: string;
+  check_out: string;
   rooms: {
     code: string;
     type: string;
+    price_per_night: number;
   };
+  services?: any[];
+  discounts?: any[];
 }
 
 export const PaymentPage: React.FC = () => {
@@ -24,7 +29,6 @@ export const PaymentPage: React.FC = () => {
   const [selectedMethod, setSelectedMethod] = useState<'yape' | 'card' | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  // Datos de tarjeta
   const [cardNumber, setCardNumber] = useState('');
   const [cardName, setCardName] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
@@ -37,12 +41,19 @@ export const PaymentPage: React.FC = () => {
       return;
     }
 
+    if (!id) {
+      toast.error('ID de reserva no válido');
+      navigate('/rooms');
+      return;
+    }
+
     loadReservation();
   }, [id, user]);
 
   const loadReservation = async () => {
     try {
       setLoading(true);
+      
       const { data } = await api.get(`/api/v1/reservations/${id}`);
       
       if (data.status !== 'pending_payment') {
@@ -51,13 +62,31 @@ export const PaymentPage: React.FC = () => {
         return;
       }
 
-      setReservation(data);
+      // Cargar servicios
+      const { data: servicesData } = await api.get(`/api/v1/services/reservation/${id}`);
+      
+      // Cargar descuentos
+      const { data: discountsData } = await api.get(`/api/v1/reservations/${id}/discounts`);
+
+      setReservation({
+        ...data,
+        services: servicesData?.services || [],
+        discounts: discountsData?.discounts || []
+      });
     } catch (error: any) {
+      console.error('Error:', error);
       toast.error('Error al cargar la reserva');
-      navigate('/reservations');
+      navigate('/rooms');
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateNights = () => {
+    if (!reservation) return 0;
+    const start = new Date(reservation.check_in);
+    const end = new Date(reservation.check_out);
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   const handlePaymentMethodSelect = (method: 'yape' | 'card') => {
@@ -70,7 +99,6 @@ export const PaymentPage: React.FC = () => {
     try {
       setProcessing(true);
 
-      // Iniciar pago
       const { data: payment } = await api.post('/api/v1/payments/initiate', {
         reservation_id: id,
         method: 'yape'
@@ -78,13 +106,11 @@ export const PaymentPage: React.FC = () => {
 
       toast.success('Procesando pago con Yape...');
 
-      // Simular pago (en producción esto sería un webhook real)
       setTimeout(async () => {
         try {
           await api.post(`/api/v1/payments/simulate/yape/${payment.payment_id}?force=success`);
-          
           toast.success('¡Pago exitoso!');
-          navigate(`/reservations/${id}/confirmation`);
+          navigate(`/confirmation/${id}`);
         } catch (error) {
           toast.error('Error al procesar el pago');
           setProcessing(false);
@@ -115,7 +141,6 @@ export const PaymentPage: React.FC = () => {
     try {
       setProcessing(true);
 
-      // Iniciar pago
       const { data: payment } = await api.post('/api/v1/payments/initiate', {
         reservation_id: id,
         method: 'card',
@@ -127,13 +152,11 @@ export const PaymentPage: React.FC = () => {
 
       toast.success('Procesando pago...');
 
-      // Simular pago
       setTimeout(async () => {
         try {
           await api.post(`/api/v1/payments/simulate/card/${payment.payment_id}?force=success`);
-          
           toast.success('¡Pago exitoso!');
-          navigate(`/reservations/${id}/confirmation`);
+          navigate(`/confirmation/${id}`);
         } catch (error) {
           toast.error('Error al procesar el pago');
           setProcessing(false);
@@ -148,12 +171,7 @@ export const PaymentPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center' 
-      }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{
           width: '50px',
           height: '50px',
@@ -167,87 +185,80 @@ export const PaymentPage: React.FC = () => {
     );
   }
 
-  if (!reservation) {
-    return null;
-  }
+  if (!reservation) return null;
+
+  const nights = calculateNights();
+  const roomSubtotal = reservation.rooms.price_per_night * nights;
+  const servicesTotal = reservation.services?.reduce((sum, s) => sum + s.subtotal, 0) || 0;
+  const discountTotal = reservation.discounts?.reduce((sum, d) => sum + d.discount_amount, 0) || 0;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* Header */}
-      <div style={{ 
-        backgroundColor: '#2563eb', 
-        color: 'white', 
-        padding: '1.5rem 0' 
-      }}>
-        <div style={{ 
-          maxWidth: '1200px', 
-          margin: '0 auto', 
-          padding: '0 1rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
-        }}>
+      <div style={{ backgroundColor: '#2563eb', color: 'white', padding: '1.5rem 0' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
-            onClick={() => navigate(`/reservations/${id}`)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'white',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              padding: '0.5rem'
-            }}
+            onClick={() => navigate('/rooms')}
             disabled={processing}
+            style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', padding: '0.5rem' }}
           >
             ←
           </button>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0 }}>
-            Procesar Pago
-          </h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0 }}>Procesar Pago</h1>
         </div>
       </div>
 
-      {/* Contenido */}
-      <div style={{ 
-        maxWidth: '800px', 
-        margin: '2rem auto', 
-        padding: '0 1rem' 
-      }}>
+      <div style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1rem' }}>
         {/* Resumen */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '8px', 
-          padding: '1.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Resumen del pago
-          </h2>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-            <span>Habitación {reservation.rooms.code}</span>
-            <span style={{ fontWeight: '500' }}>{reservation.rooms.type}</span>
+        <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', marginBottom: '2rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>Resumen del pago</h2>
+          
+          <div style={{ marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span>Habitación {reservation.rooms.code}</span>
+              <span style={{ fontWeight: '500' }}>{reservation.rooms.type}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#6b7280' }}>
+              <span>S/ {reservation.rooms.price_per_night} × {nights} noches</span>
+              <span>S/ {roomSubtotal.toFixed(2)}</span>
+            </div>
           </div>
+
+          {reservation.services && reservation.services.length > 0 && (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+              <div style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Servicios adicionales:</div>
+              {reservation.services.map((service: any, idx: number) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+                  <span>• {service.services?.name} × {service.quantity}</span>
+                  <span>S/ {service.subtotal.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {reservation.discounts && reservation.discounts.length > 0 && (
+            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+              {reservation.discounts.map((discount: any, idx: number) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: '500', fontSize: '0.875rem' }}>
+                  <span>Descuento: {discount.discounts?.code}</span>
+                  <span>- S/ {discount.discount_amount.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+          
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.5rem', fontWeight: 'bold' }}>
             <span>Total a pagar</span>
-            <span style={{ color: '#2563eb' }}>S/ {reservation.total_amount}</span>
+            <span style={{ color: '#2563eb' }}>S/ {reservation.total_amount.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Métodos de pago */}
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '8px', 
-          padding: '1.5rem',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
-            Selecciona método de pago
-          </h2>
+        <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Selecciona método de pago</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-            {/* Yape */}
             <button
               onClick={() => handlePaymentMethodSelect('yape')}
               disabled={processing}
@@ -257,18 +268,14 @@ export const PaymentPage: React.FC = () => {
                 borderRadius: '8px',
                 backgroundColor: selectedMethod === 'yape' ? '#eff6ff' : 'white',
                 cursor: processing ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
                 opacity: processing ? 0.5 : 1
               }}
             >
               <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>💜</div>
               <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>Yape</div>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                Pago instantáneo
-              </div>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>Pago instantáneo</div>
             </button>
 
-            {/* Tarjeta */}
             <button
               onClick={() => handlePaymentMethodSelect('card')}
               disabled={processing}
@@ -278,80 +285,40 @@ export const PaymentPage: React.FC = () => {
                 borderRadius: '8px',
                 backgroundColor: selectedMethod === 'card' ? '#eff6ff' : 'white',
                 cursor: processing ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
                 opacity: processing ? 0.5 : 1
               }}
             >
               <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>💳</div>
               <div style={{ fontWeight: '600', fontSize: '1.125rem' }}>Tarjeta</div>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                Crédito o débito
-              </div>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>Crédito o débito</div>
             </button>
           </div>
 
-          {/* Formulario de Yape */}
           {selectedMethod === 'yape' && (
-            <div style={{ 
-              padding: '1.5rem', 
-              backgroundColor: '#f9fafb', 
-              borderRadius: '8px',
-              textAlign: 'center'
-            }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-                Pagar con Yape
-              </h3>
-              <div style={{ 
-                width: '200px', 
-                height: '200px', 
-                backgroundColor: '#fff',
-                margin: '0 auto 1rem',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px solid #e5e7eb'
-              }}>
+            <div style={{ padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '8px', textAlign: 'center' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Pagar con Yape</h3>
+              <div style={{ width: '200px', height: '200px', backgroundColor: '#fff', margin: '0 auto 1rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #e5e7eb' }}>
                 <div style={{ fontSize: '4rem' }}>📱</div>
               </div>
-              <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                Escanea el código QR con tu app de Yape
-              </p>
-              <p style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                Monto: <strong>S/ {reservation.total_amount}</strong>
-              </p>
+              <p style={{ color: '#6b7280', fontSize: '0.875rem', marginBottom: '1rem' }}>Escanea el código QR con tu app de Yape</p>
+              <p style={{ fontSize: '0.875rem', marginBottom: '1.5rem' }}>Monto: <strong>S/ {reservation.total_amount.toFixed(2)}</strong></p>
               <button
                 onClick={handleYapePayment}
                 disabled={processing}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  backgroundColor: '#7c3aed',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontWeight: '500',
-                  cursor: processing ? 'not-allowed' : 'pointer',
-                  opacity: processing ? 0.5 : 1
-                }}
+                style={{ width: '100%', padding: '0.75rem', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '500', cursor: processing ? 'not-allowed' : 'pointer', opacity: processing ? 0.5 : 1 }}
               >
                 {processing ? 'Procesando...' : 'Confirmar pago con Yape'}
               </button>
             </div>
           )}
 
-          {/* Formulario de Tarjeta */}
           {selectedMethod === 'card' && (
             <form onSubmit={handleCardPayment}>
               <div style={{ padding: '1.5rem', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
-                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>
-                  Datos de la tarjeta
-                </h3>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>Datos de la tarjeta</h3>
 
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>
-                    Número de tarjeta
-                  </label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Número de tarjeta</label>
                   <input
                     type="text"
                     value={cardNumber}
@@ -364,20 +331,12 @@ export const PaymentPage: React.FC = () => {
                     maxLength={19}
                     required
                     disabled={processing}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      fontSize: '1rem'
-                    }}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '1rem' }}
                   />
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>
-                    Nombre del titular
-                  </label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Nombre del titular</label>
                   <input
                     type="text"
                     value={cardName}
@@ -385,48 +344,30 @@ export const PaymentPage: React.FC = () => {
                     placeholder="NOMBRE APELLIDO"
                     required
                     disabled={processing}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      fontSize: '1rem'
-                    }}
+                    style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '1rem' }}
                   />
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>
-                      Vencimiento
-                    </label>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Vencimiento</label>
                     <input
                       type="text"
                       value={cardExpiry}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, '');
-                        if (value.length >= 2) {
-                          value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                        }
+                        if (value.length >= 2) value = value.slice(0, 2) + '/' + value.slice(2, 4);
                         setCardExpiry(value);
                       }}
                       placeholder="MM/YY"
                       maxLength={5}
                       required
                       disabled={processing}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        fontSize: '1rem'
-                      }}
+                      style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '1rem' }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>
-                      CVV
-                    </label>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>CVV</label>
                     <input
                       type="text"
                       value={cardCvv}
@@ -435,13 +376,7 @@ export const PaymentPage: React.FC = () => {
                       maxLength={4}
                       required
                       disabled={processing}
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        fontSize: '1rem'
-                      }}
+                      style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '1rem' }}
                     />
                   </div>
                 </div>
@@ -449,46 +384,18 @@ export const PaymentPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={processing}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontWeight: '500',
-                    cursor: processing ? 'not-allowed' : 'pointer',
-                    marginTop: '1.5rem',
-                    opacity: processing ? 0.5 : 1
-                  }}
+                  style={{ width: '100%', padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '500', cursor: processing ? 'not-allowed' : 'pointer', marginTop: '1.5rem', opacity: processing ? 0.5 : 1 }}
                 >
-                  {processing ? 'Procesando pago...' : `Pagar S/ ${reservation.total_amount}`}
+                  {processing ? 'Procesando pago...' : `Pagar S/ ${reservation.total_amount.toFixed(2)}`}
                 </button>
               </div>
             </form>
           )}
 
           {processing && (
-            <div style={{ 
-              marginTop: '1.5rem', 
-              padding: '1rem', 
-              backgroundColor: '#eff6ff',
-              borderRadius: '8px',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                display: 'inline-block',
-                width: '40px',
-                height: '40px',
-                border: '4px solid #bfdbfe',
-                borderTopColor: '#2563eb',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                marginBottom: '0.5rem'
-              }} />
-              <p style={{ color: '#1e40af', fontWeight: '500' }}>
-                Procesando tu pago de forma segura...
-              </p>
+            <div style={{ marginTop: '1.5rem', padding: '1rem', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center' }}>
+              <div style={{ display: 'inline-block', width: '40px', height: '40px', border: '4px solid #bfdbfe', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 1s linear infinite', marginBottom: '0.5rem' }} />
+              <p style={{ color: '#1e40af', fontWeight: '500' }}>Procesando tu pago de forma segura...</p>
             </div>
           )}
         </div>

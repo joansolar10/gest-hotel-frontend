@@ -15,6 +15,7 @@ interface User {
   dni?: string;
   birthdate?: string;
   is_verified_dni: boolean;
+  role?: string; // ← NUEVO
 }
 
 interface AuthContextType {
@@ -23,7 +24,8 @@ interface AuthContextType {
   loginWithGoogle: (idToken: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
-  updateUser: (userData: Partial<User>) => void; // ← NUEVO
+  updateUser: (userData: Partial<User>) => void;
+  isAdmin: boolean; // ← NUEVO
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +35,9 @@ const USE_MOCK = false;
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // ← NUEVO: Computed property
+  const isAdmin = user?.role === 'admin' || user?.role === 'receptionist';
 
   useEffect(() => {
     checkUser();
@@ -52,32 +57,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           name: 'Usuario de Prueba',
           phone: '987654321',
           dni: '12345678',
-          is_verified_dni: true
+          is_verified_dni: true,
+          role: 'user'
         };
         
-        console.log('✅ [AuthContext] Usuario mock cargado:', mockUser);
         setUser(mockUser);
       } else {
         const token = localStorage.getItem('access_token');
         if (token) {
-          console.log('🔍 [AuthContext] Token encontrado, obteniendo usuario...');
           try {
             const { data } = await api.get('/api/v1/auth/me');
-            console.log('✅ [AuthContext] Usuario obtenido desde API:', data);
+            console.log('✅ [AuthContext] Usuario obtenido:', data);
             setUser(data);
           } catch (error) {
-            console.error('❌ [AuthContext] Error al obtener usuario, limpiando token:', error);
+            console.error('❌ [AuthContext] Error:', error);
             localStorage.removeItem('access_token');
             localStorage.removeItem('token');
             setUser(null);
           }
         } else {
-          console.log('ℹ️ [AuthContext] No hay token, usuario no autenticado');
           setUser(null);
         }
       }
     } catch (error) {
-      console.error('❌ [AuthContext] Error checking user:', error);
+      console.error('❌ [AuthContext] Error:', error);
       if (!USE_MOCK) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('token');
@@ -89,23 +92,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginWithGoogle = async (idToken: string) => {
     try {
-      console.log('🔐 [AuthContext] Iniciando login con Google...');
       const { data } = await api.post('/api/v1/auth/google', { id_token: idToken });
       
-      console.log('✅ [AuthContext] Login exitoso, guardando token...');
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('token', data.access_token);
       
-      console.log('👤 [AuthContext] Usuario autenticado:', data.user);
       setUser(data.user);
     } catch (error) {
-      console.error('❌ [AuthContext] Error logging in with Google:', error);
+      console.error('❌ Error login:', error);
       throw error;
     }
   };
 
   const logout = () => {
-    console.log('🚪 [AuthContext] Cerrando sesión...');
     localStorage.removeItem('access_token');
     localStorage.removeItem('token');
     setUser(null);
@@ -113,14 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUser = async () => {
-    console.log('🔄 [AuthContext] Refrescando usuario...');
     await checkUser();
   };
 
-  // ← NUEVO MÉTODO
   const updateUser = (userData: Partial<User>) => {
-    console.log('🔄 [AuthContext] Actualizando usuario en contexto:', userData);
-    setUser(prev => prev ? { ...prev, ...userData } : null);
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      return { ...prevUser, ...userData };
+    });
   };
 
   return (
@@ -130,7 +129,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       loginWithGoogle, 
       logout, 
       refreshUser,
-      updateUser // ← EXPORTAR
+      updateUser,
+      isAdmin // ← NUEVO
     }}>
       {children}
     </AuthContext.Provider>

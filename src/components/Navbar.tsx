@@ -1,55 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const { user, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const isDniVerified = user?.is_verified_dni;
 
   const handleLogout = () => {
     logout();
-    toast.success('Sesión cerrada', { icon: '👋' });
+    setShowUserMenu(false);
     navigate('/login');
-  };
-
-  if (!user) return null;
-
-  // Obtener iniciales del nombre
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
     <nav style={{
-      backgroundColor: '#2563eb',
-      color: 'white',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      backgroundColor: 'white',
+      borderBottom: '1px solid #e5e7eb',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       position: 'sticky',
       top: 0,
       zIndex: 1000
     }}>
       <div style={{
-        maxWidth: '1200px',
+        maxWidth: '100%',
         margin: '0 auto',
-        padding: '0 1rem',
+        padding: '0 2rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: '64px'
+        height: '70px'
       }}>
-        {/* Logo */}
+        
+        {/* LOGO */}
         <div 
-          onClick={() => navigate('/rooms')}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: '0.75rem',
             cursor: 'pointer',
             transition: 'opacity 0.2s'
@@ -57,274 +47,231 @@ export const Navbar: React.FC = () => {
           onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
           onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
         >
-          <span style={{ fontSize: '1.75rem' }}>🏨</span>
+          <div style={{
+            width: '45px',
+            height: '45px',
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.5rem'
+          }}>
+            🏨
+          </div>
           <div>
-            <h1 style={{ 
-              fontSize: '1.25rem', 
-              fontWeight: 'bold', 
-              margin: 0,
+            <div style={{
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              color: '#111827',
               lineHeight: 1
             }}>
               Hotel Los Andes
-            </h1>
-            <p style={{ 
-              fontSize: '0.7rem', 
-              margin: 0, 
-              opacity: 0.9,
+            </div>
+            <div style={{
+              fontSize: '0.75rem',
+              color: '#6b7280',
               marginTop: '2px'
             }}>
-              Sistema de Reservas
-            </p>
+              Tu hogar lejos de casa
+            </div>
           </div>
         </div>
 
-        {/* User Menu */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              borderRadius: '8px',
-              padding: '0.5rem 1rem',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.25)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-            }}
-          >
-            {/* Avatar */}
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#10b981',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 'bold',
-              color: 'white',
-              border: '2px solid rgba(255,255,255,0.5)'
-            }}>
-              {getInitials(user.name)}
-            </div>
-
-            {/* Nombre */}
-            <span style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {user.name}
-            </span>
-
-            {/* Arrow */}
-            <span style={{ 
-              fontSize: '0.75rem',
-              transition: 'transform 0.2s',
-              transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)'
-            }}>
-              ▼
-            </span>
-          </button>
-
-          {/* Dropdown */}
-          {showDropdown && (
+        {/* USUARIO / LOGIN */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {user ? (
             <>
-              {/* Overlay para cerrar dropdown */}
-              <div 
-                onClick={() => setShowDropdown(false)}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 999
-                }}
-              />
-
-              {/* Menú desplegable */}
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                right: 0,
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                minWidth: '250px',
-                overflow: 'hidden',
-                zIndex: 1000
-              }}>
-                {/* User Info */}
+              {isDniVerified && (
                 <div style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #e5e7eb',
-                  backgroundColor: '#f9fafb'
+                  padding: '0.375rem 0.75rem',
+                  backgroundColor: '#dcfce7',
+                  color: '#166534',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      backgroundColor: '#10b981',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1rem',
-                      fontWeight: 'bold',
-                      color: 'white'
-                    }}>
-                      {getInitials(user.name)}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ 
-                        margin: 0, 
-                        fontWeight: '600', 
-                        color: '#111827',
-                        fontSize: '0.875rem',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {user.name}
-                      </p>
-                      <p style={{ 
-                        margin: 0, 
-                        color: '#6b7280', 
-                        fontSize: '0.75rem',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
+                  <span>✓</span>
+                  Verificado
+                </div>
+              )}
 
-                  {/* Estado de verificación */}
-                  <div style={{
-                    marginTop: '0.75rem',
-                    padding: '0.5rem',
-                    borderRadius: '6px',
-                    backgroundColor: user.is_verified_dni ? '#d1fae5' : '#fef3c7',
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    gap: '0.75rem',
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#f9fafb',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontFamily: 'inherit'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                  }}
+                >
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: '#2563eb',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    fontWeight: 'bold'
                   }}>
-                    <span style={{ fontSize: '0.875rem' }}>
-                      {user.is_verified_dni ? '✓' : '⚠️'}
-                    </span>
-                    <span style={{ 
-                      fontSize: '0.75rem',
-                      color: user.is_verified_dni ? '#065f46' : '#92400e',
-                      fontWeight: '500'
-                    }}>
-                      {user.is_verified_dni ? 'DNI Verificado' : 'DNI Pendiente'}
-                    </span>
+                    {user.name?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
                   </div>
-                </div>
-
-                {/* Menu Items */}
-                <div style={{ padding: '0.5rem' }}>
-                  <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate('/rooms');
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{
                       fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      transition: 'background-color 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <span style={{ fontSize: '1.125rem' }}>🏠</span>
-                    Habitaciones
-                  </button>
+                      fontWeight: '600',
+                      color: '#111827',
+                      lineHeight: 1.2
+                    }}>
+                      {user.name || 'Usuario'}
+                    </div>
+                    <div style={{
+                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                      lineHeight: 1.2,
+                      marginTop: '2px'
+                    }}>
+                      {user.email}
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    color: '#6b7280',
+                    transition: 'transform 0.2s',
+                    transform: showUserMenu ? 'rotate(180deg)' : 'rotate(0deg)'
+                  }}>
+                    ▼
+                  </span>
+                </button>
 
-                  {!user.is_verified_dni && (
-                    <button
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate('/verify-dni');
-                      }}
+                {showUserMenu && (
+                  <>
+                    <div
+                      onClick={() => setShowUserMenu(false)}
                       style={{
-                        width: '100%',
-                        padding: '0.75rem 1rem',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.75rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        color: '#374151',
-                        transition: 'background-color 0.2s',
-                        textAlign: 'left'
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 999
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef3c7'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      <span style={{ fontSize: '1.125rem' }}>🪪</span>
-                      Verificar DNI
-                    </button>
-                  )}
-                </div>
+                    />
+                    
+                    <div style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 0.5rem)',
+                      right: 0,
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      minWidth: '200px',
+                      overflow: 'hidden',
+                      zIndex: 1000
+                    }}>
+                      <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid #e5e7eb' }}>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: '#6b7280',
+                          marginBottom: '0.25rem'
+                        }}>
+                          Sesión iniciada como
+                        </div>
+                        <div style={{
+                          fontSize: '0.875rem',
+                          fontWeight: '600',
+                          color: '#111827'
+                        }}>
+                          {user.email}
+                        </div>
+                      </div>
 
-                {/* Logout */}
-                <div style={{ 
-                  padding: '0.5rem',
-                  borderTop: '1px solid #e5e7eb'
-                }}>
-                  <button
-                    onClick={handleLogout}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.75rem',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#dc2626',
-                      transition: 'background-color 0.2s',
-                      textAlign: 'left'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fee2e2'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                  >
-                    <span style={{ fontSize: '1.125rem' }}>🚪</span>
-                    Cerrar sesión
-                  </button>
-                </div>
+                      <div style={{ borderTop: '1px solid #e5e7eb' }}>
+                        <button
+                          onClick={handleLogout}
+                          style={{
+                            width: '100%',
+                            padding: '0.75rem 1rem',
+                            backgroundColor: 'white',
+                            border: 'none',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            fontSize: '0.875rem',
+                            color: '#dc2626',
+                            fontWeight: '600',
+                            transition: 'background-color 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            fontFamily: 'inherit'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#fef2f2'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+                        >
+                          <span style={{ fontSize: '1rem' }}>🚪</span>
+                          Cerrar Sesión
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </>
+          ) : (
+            <button
+              onClick={() => navigate('/login')}
+              style={{
+                padding: '0.625rem 1.5rem',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 1px 3px rgba(37,99,235,0.3)',
+                fontFamily: 'inherit'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#1d4ed8';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 6px rgba(37,99,235,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(37,99,235,0.3)';
+              }}
+            >
+              <span style={{ fontSize: '1.125rem' }}>👤</span>
+              Iniciar Sesión
+            </button>
           )}
         </div>
       </div>

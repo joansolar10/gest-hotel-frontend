@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export const DNIVerificationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { refreshUser } = useAuth(); // ← AÑADIR refreshUser
+  const { refreshUser } = useAuth();
   const [dni, setDni] = useState('');
   const [birthdate, setBirthdate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,13 +65,18 @@ export const DNIVerificationPage: React.FC = () => {
           icon: '✅'
         });
 
-        // ← REFRESCAR USUARIO INMEDIATAMENTE
+        // Refrescar usuario inmediatamente
         console.log('🔄 Refrescando usuario después de verificar DNI...');
         await refreshUser();
         
-        // Redirigir a la página de habitaciones
+        // ✨ Redirigir a donde venía el usuario o a /rooms por defecto
+        const redirectUrl = localStorage.getItem('redirect_after_verification') || '/rooms';
+        localStorage.removeItem('redirect_after_verification'); // Limpiar
+        
+        console.log('🔀 Redirigiendo a:', redirectUrl);
+        
         setTimeout(() => {
-          navigate('/rooms');
+          navigate(redirectUrl, { replace: true });
         }, 1500);
       }
     } catch (error: any) {
@@ -108,7 +113,7 @@ export const DNIVerificationPage: React.FC = () => {
               Verificación de Identidad
             </h2>
             <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
-              Ingresa tus datos para continuar con la reserva
+              Ingresa tus datos para continuar
             </p>
           </div>
 

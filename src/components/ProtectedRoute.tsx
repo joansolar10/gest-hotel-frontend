@@ -1,45 +1,30 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useVerification } from '../hooks/useVerification';
-import toast from 'react-hot-toast';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+/**
+ * ProtectedRoute - Solo verifica que el usuario esté autenticado
+ * NO verifica si tiene DNI verificado
+ * 
+ * Usar para rutas que solo necesitan login:
+ * - Ver mis reservas
+ * - Ver habitaciones
+ * - Ver perfil
+ */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isVerified, isLoading } = useVerification();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    console.log('🔒 [ProtectedRoute] Verificando acceso:', {
-      isVerified,
-      isLoading,
-      path: location.pathname
-    });
-
-    // Solo redirigir si ya terminó de cargar Y no está verificado
-    if (!isLoading && !isVerified) {
-      console.log('❌ [ProtectedRoute] Usuario NO verificado, redirigiendo a /verify-dni');
-      
-      toast.error('Debes verificar tu DNI antes de continuar', {
-        duration: 3000,
-        icon: '🔒'
-      });
-
-      // Guardar la URL para volver después de verificar
-      localStorage.setItem('redirect_after_verification', location.pathname);
-      
-      navigate('/verify-dni', { replace: true });
-    } else if (!isLoading && isVerified) {
-      console.log('✅ [ProtectedRoute] Usuario verificado, permitiendo acceso');
-    }
-  }, [isVerified, isLoading, location.pathname, navigate]);
+  console.log('🔒 [ProtectedRoute] Verificando autenticación:', {
+    authenticated: !!user,
+    loading
+  });
 
   // Mostrar loading mientras verifica
-  if (isLoading) {
-    console.log('⏳ [ProtectedRoute] Cargando estado de verificación...');
+  if (loading) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -58,7 +43,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 1rem'
           }} />
-          <p style={{ color: '#6b7280' }}>Verificando acceso...</p>
+          <p style={{ color: '#6b7280' }}>Cargando...</p>
           <style>{`
             @keyframes spin {
               to { transform: rotate(360deg); }
@@ -69,13 +54,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Si no está verificado, no mostrar nada (el useEffect redirigirá)
-  if (!isVerified) {
-    console.log('🚫 [ProtectedRoute] No verificado, no renderizando contenido');
-    return null;
+  // Si no está autenticado, redirigir a login
+  if (!user) {
+    console.log('❌ [ProtectedRoute] No autenticado, redirigiendo a /login');
+    return <Navigate to="/login" replace />;
   }
 
-  // Usuario verificado, mostrar contenido
-  console.log('✅ [ProtectedRoute] Renderizando contenido protegido');
+  // Usuario autenticado, mostrar contenido
+  console.log('✅ [ProtectedRoute] Autenticado, mostrando contenido');
   return <>{children}</>;
 };

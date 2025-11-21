@@ -1,77 +1,84 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { Toaster } from 'react-hot-toast';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { DNIProtectedRoute } from './components/DNIProtectedRoute';
+import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
+
+// Pages
 import { LoginPage } from './pages/LoginPage';
 import { RoomsPage } from './pages/RoomsPage';
+import { MyReservationsPage } from './pages/MyReservationsPage';
 import { RoomDetailPage } from './pages/RoomDetailPage';
 import { NewReservationPage } from './pages/NewReservationPage';
-import { ReservationDetailPage } from './pages/ReservationDetailPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { DNIVerificationPage } from './pages/DNIVerificationPage';
-import { Navbar } from './components/Navbar';
+import { ContactPage } from './pages/ContactPage';
+import { AboutPage } from './pages/AboutPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { AdminReservationsPage } from './pages/AdminReservationsPage';
+import { AdminRoomsPage } from './pages/AdminRoomsPage';
+
+const AppContent = () => {
+  const location = useLocation();
+  
+  // Rutas donde NO mostrar la sidebar
+  const hideSidebarRoutes = ['/login', '/verify-dni'];
+  const showSidebar = !hideSidebarRoutes.includes(location.pathname);
+
+  return (
+    <>
+      <Navbar />
+      {showSidebar && <Sidebar />}
+      
+      <div style={{ 
+        marginLeft: showSidebar ? '54px' : '0',
+        transition: 'margin-left 0.3s ease',
+        minHeight: 'calc(100vh - 70px)',
+        paddingLeft: '0'
+      }}>
+        <Routes>
+          {/* RUTAS PÚBLICAS */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/verify-dni" element={<DNIVerificationPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+
+          {/* RUTAS PROTEGIDAS - SOLO LOGIN */}
+          <Route path="/rooms" element={<ProtectedRoute><RoomsPage /></ProtectedRoute>} />
+          <Route path="/rooms/:id" element={<ProtectedRoute><RoomDetailPage /></ProtectedRoute>} />
+          <Route path="/my-reservations" element={<ProtectedRoute><MyReservationsPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/confirmation/:id" element={<ProtectedRoute><ConfirmationPage /></ProtectedRoute>} />
+
+          {/* RUTAS PROTEGIDAS - LOGIN + DNI */}
+          <Route path="/rooms/:id/reserve" element={<DNIProtectedRoute><NewReservationPage /></DNIProtectedRoute>} />
+          <Route path="/payment/:id" element={<DNIProtectedRoute><PaymentPage /></DNIProtectedRoute>} />
+
+          {/* RUTAS ADMIN */}
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+          <Route path="/admin/reservations" element={<ProtectedRoute><AdminReservationsPage /></ProtectedRoute>} />
+          <Route path="/admin/rooms" element={<ProtectedRoute><AdminRoomsPage /></ProtectedRoute>} />
+
+          {/* RUTAS DEFAULT */}
+          <Route path="/" element={<Navigate to="/rooms" replace />} />
+          <Route path="*" element={<Navigate to="/rooms" replace />} />
+        </Routes>
+      </div>
+    </>
+  );
+};
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Navbar />
-          <Routes>
-            {/* Rutas públicas */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<RoomsPage />} />
-            <Route path="/rooms" element={<RoomsPage />} />
-            <Route path="/verify-dni" element={<DNIVerificationPage />} />
-            
-            {/* Rutas protegidas - requieren verificación DNI */}
-            <Route 
-              path="/rooms/:id" 
-              element={
-                <ProtectedRoute>
-                  <RoomDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/reservations/new" 
-              element={
-                <ProtectedRoute>
-                  <NewReservationPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/reservations/:id" 
-              element={
-                <ProtectedRoute>
-                  <ReservationDetailPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/payments/:id" 
-              element={
-                <ProtectedRoute>
-                  <PaymentPage />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/reservations/:id/confirmation" 
-              element={
-                <ProtectedRoute>
-                  <ConfirmationPage />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </BrowserRouter>
-        <Toaster position="top-right" />
-      </AuthProvider>
-    </GoogleOAuthProvider>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

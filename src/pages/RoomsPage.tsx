@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomFilters } from '../components/rooms/RoomFilters';
-import { RoomCard } from '../components/rooms/RoomCard';
+import { FilterSidebar } from '../components/FilterSidebar';
+import { RoomCardHorizontal } from '../components/RoomCardHorizontal';
 import { roomService } from '../services/room.service';
 import { Room, RoomFilters as RoomFiltersType } from '../types';
 import { useVerification } from '../hooks/useVerification';
@@ -11,6 +11,7 @@ export const RoomsPage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<RoomFiltersType>({});
+  const [sortBy, setSortBy] = useState<'price_asc' | 'price_desc' | 'rating'>('price_asc');
   const { isVerified } = useVerification();
   const navigate = useNavigate();
 
@@ -22,10 +23,7 @@ export const RoomsPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await roomService.getRooms(newFilters || filters);
-      
       const roomsData = response.data?.data || response.data || [];
-      
-      console.log('📊 Habitaciones cargadas:', roomsData.length);
       setRooms(Array.isArray(roomsData) ? roomsData : []);
     } catch (error) {
       toast.error('Error al cargar habitaciones');
@@ -41,86 +39,64 @@ export const RoomsPage: React.FC = () => {
     loadRooms(newFilters);
   };
 
+  const sortedRooms = [...rooms].sort((a, b) => {
+    if (sortBy === 'price_asc') return a.price_per_night - b.price_per_night;
+    if (sortBy === 'price_desc') return b.price_per_night - a.price_per_night;
+    return 0;
+  });
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      {/* Header */}
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6' }}>
+      {/* Header moderno */}
       <div style={{ 
-        backgroundColor: '#2563eb', 
-        color: 'white', 
-        padding: '2rem 0',
-        marginBottom: '2rem'
+        backgroundColor: 'white',
+        borderBottom: '1px solid #e5e7eb',
+        padding: '1.5rem 0'
       }}>
         <div style={{ 
-          maxWidth: '1200px', 
+          maxWidth: '1400px', 
           margin: '0 auto', 
-          padding: '0 1rem' 
+          padding: '0 2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-            Hotel Los Andes
-          </h1>
-          <p style={{ marginTop: '0.5rem', opacity: 0.9 }}>
-            Encuentra la habitación perfecta para tu estadía
-          </p>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0, color: '#111827' }}>
+              Encuentra tu habitación ideal
+            </h1>
+            <p style={{ marginTop: '0.25rem', color: '#6b7280', fontSize: '0.95rem' }}>
+              {rooms.length} propiedades en Hotel Los Andes
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>Ordenar por:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              style={{
+                padding: '0.5rem 1rem',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                backgroundColor: 'white'
+              }}
+            >
+              <option value="price_asc">Precio: menor a mayor</option>
+              <option value="price_desc">Precio: mayor a menor</option>
+              <option value="rating">Mejor valoradas</option>
+            </select>
+          </div>
         </div>
-      </div>
-
-      {/* 🧪 BOTÓN DE PRUEBA - TEMPORAL */}
-      <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto 2rem', 
-        padding: '0 1rem',
-        textAlign: 'center'
-      }}>
-        <button
-          onClick={() => {
-            console.log('🧪 TEST: Click en botón de prueba');
-            console.log('🧪 TEST: isVerified =', isVerified);
-            console.log('🧪 TEST: Navegando a /verify-dni...');
-            
-            toast.success('Navegando a verificación...', { duration: 1000 });
-            
-            setTimeout(() => {
-              navigate('/verify-dni');
-            }, 500);
-          }}
-          style={{
-            padding: '1.5rem 3rem',
-            backgroundColor: '#ef4444',
-            color: 'white',
-            border: '4px solid #dc2626',
-            borderRadius: '8px',
-            fontSize: '1.5rem',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'scale(1.05)';
-            e.currentTarget.style.backgroundColor = '#dc2626';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'scale(1)';
-            e.currentTarget.style.backgroundColor = '#ef4444';
-          }}
-        >
-          🧪 TEST: IR A VERIFICACIÓN DNI
-        </button>
-        <p style={{ 
-          marginTop: '0.5rem', 
-          color: '#6b7280', 
-          fontSize: '0.875rem' 
-        }}>
-          ⬆️ Este botón es temporal para probar la navegación
-        </p>
       </div>
 
       {/* Banner de verificación */}
       {!isVerified && (
         <div style={{ 
-          maxWidth: '1200px', 
-          margin: '0 auto 2rem', 
-          padding: '0 1rem' 
+          maxWidth: '1400px', 
+          margin: '1.5rem auto 0', 
+          padding: '0 2rem' 
         }}>
           <div style={{
             backgroundColor: '#fef3c7',
@@ -145,16 +121,13 @@ export const RoomsPage: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => {
-                console.log('🔵 Click en botón del banner');
-                navigate('/verify-dni');
-              }}
+              onClick={() => navigate('/verify-dni')}
               style={{
                 padding: '0.75rem 1.5rem',
                 backgroundColor: '#2563eb',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '6px',
                 fontSize: '0.875rem',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -170,77 +143,63 @@ export const RoomsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Contenido */}
+      {/* Layout principal */}
       <div style={{ 
-        maxWidth: '1200px', 
-        margin: '0 auto', 
-        padding: '0 1rem 2rem' 
+        maxWidth: '1400px', 
+        margin: '2rem auto', 
+        padding: '0 2rem 0.5rem',
+        display: 'flex',
+        gap: '1.5rem'
       }}>
-        {/* Filtros */}
-        <RoomFilters onFilterChange={handleFilterChange} />
+        {/* Sidebar izquierdo */}
+        <FilterSidebar onFilterChange={handleFilterChange} />
 
-        {/* Loading */}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '3rem' }}>
-            <div style={{
-              display: 'inline-block',
-              width: '50px',
-              height: '50px',
-              border: '4px solid #e5e7eb',
-              borderTopColor: '#2563eb',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            <p style={{ marginTop: '1rem', color: '#6b7280' }}>Cargando habitaciones...</p>
-            <style>{`
-              @keyframes spin {
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
-          </div>
-        )}
-
-        {/* Lista de habitaciones */}
-        {!loading && rooms.length > 0 && (
-          <>
-            <div style={{ marginBottom: '1rem', color: '#6b7280' }}>
-              Encontradas {rooms.length} habitación(es)
+        {/* Contenido principal */}
+        <div style={{ flex: 1 }}>
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '4rem' }}>
+              <div style={{
+                display: 'inline-block',
+                width: '50px',
+                height: '50px',
+                border: '4px solid #e5e7eb',
+                borderTopColor: '#2563eb',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <p style={{ marginTop: '1rem', color: '#6b7280', fontSize: '0.875rem' }}>
+                Buscando las mejores opciones...
+              </p>
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '1.5rem'
-            }}>
-              {rooms.map((room) => (
-                <RoomCard 
-                  key={room.id} 
-                  room={room} 
-                  onSelect={() => {}}
-                />
+          )}
+
+          {!loading && sortedRooms.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {sortedRooms.map((room) => (
+                <RoomCardHorizontal key={room.id} room={room} />
               ))}
             </div>
-          </>
-        )}
+          )}
 
-        {/* Sin resultados */}
-        {!loading && rooms.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '3rem',
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏨</div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem' }}>
-              No se encontraron habitaciones
-            </h3>
-            <p style={{ color: '#6b7280' }}>
-              Intenta ajustar los filtros de búsqueda
-            </p>
-          </div>
-        )}
+          {!loading && sortedRooms.length === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '4rem',
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+            }}>
+              <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔍</div>
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', color: '#111827' }}>
+                No encontramos habitaciones
+              </h3>
+              <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>
+                Intenta ajustar los filtros de búsqueda o las fechas
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
