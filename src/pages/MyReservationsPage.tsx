@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMyReservations } from '../hooks/useMyReservations';
+import { Button } from '../components/ui/button';
 
 type FilterTab = 'all' | 'upcoming' | 'past' | 'cancelled';
 
@@ -82,28 +83,21 @@ export const MyReservationsPage: React.FC = () => {
               {filteredReservations.length} {filteredReservations.length === 1 ? 'reserva' : 'reservas'}
             </p>
           </div>
-          <button
+          <Button
             onClick={() => navigate('/rooms')}
             style={{
-              padding: '0.75rem 1.5rem',
-              backgroundColor: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
+              padding: '12px 20px',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              fontSize: '14px',
               fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '8px'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
           >
             <span>🏨</span>
             Nueva reserva
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -271,61 +265,40 @@ export const MyReservationsPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
                         {isPaid && (
-                          <button
+                          <Button
                             onClick={() => handleDownloadPDF(reservation.id)}
                             style={{
-                              padding: '0.625rem 1rem',
-                              backgroundColor: '#2563eb',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
+                              padding: '10px 16px',
+                              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                              fontSize: '13px',
                               fontWeight: '600',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.375rem'
+                              gap: '6px'
                             }}
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                           >
                             <span>📄</span>PDF
-                          </button>
+                          </Button>
                         )}
                         
                         {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
-                          <button
+                          <Button
                             onClick={() => handleCancelReservation(reservation.id)}
                             disabled={cancellingId === reservation.id}
+                            variant="outline"
                             style={{
-                              padding: '0.625rem 1rem',
-                              backgroundColor: cancellingId === reservation.id ? '#9ca3af' : 'white',
-                              color: cancellingId === reservation.id ? 'white' : '#dc2626',
-                              border: '2px solid #dc2626',
-                              borderRadius: '6px',
-                              fontSize: '0.8rem',
+                              padding: '10px 16px',
+                              fontSize: '13px',
                               fontWeight: '600',
-                              cursor: cancellingId === reservation.id ? 'not-allowed' : 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              if (cancellingId !== reservation.id) {
-                                e.currentTarget.style.backgroundColor = '#dc2626';
-                                e.currentTarget.style.color = 'white';
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (cancellingId !== reservation.id) {
-                                e.currentTarget.style.backgroundColor = 'white';
-                                e.currentTarget.style.color = '#dc2626';
-                              }
+                              borderColor: '#dc2626',
+                              color: '#dc2626',
+                              backgroundColor: 'white'
                             }}
                           >
                             {cancellingId === reservation.id ? 'Cancelando...' : 'Cancelar'}
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </div>
@@ -345,28 +318,21 @@ export const MyReservationsPage: React.FC = () => {
             <p style={{ color: '#6b7280', marginBottom: '2rem', fontSize: '0.95rem' }}>
               {activeTab === 'all' ? 'Aún no has realizado ninguna reserva.' : `No tienes reservas ${tabs.find(t => t.key === activeTab)?.label.toLowerCase()}.`}
             </p>
-            <button
+            <Button
               onClick={() => navigate('/rooms')}
               style={{
-                padding: '0.75rem 1.5rem',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '0.95rem',
+                padding: '12px 20px',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                fontSize: '15px',
                 fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '8px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
             >
               <span>🏨</span>
               Explorar habitaciones
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -1,293 +1,621 @@
 import React from 'react';
+
 import { useNavigate } from 'react-router-dom';
 
+ 
+
 interface Room {
+
   id: string;
+
   code: string;
+
   type: string;
+
   description: string;
+
   capacity: number;
+
   price_per_night: number;
+
   status: string;
+
   services?: {
+
     wifi?: boolean;
+
     ac?: boolean;
+
     tv?: boolean;
+
     minibar?: boolean;
+
     jacuzzi?: boolean;
+
   };
+
   images?: string[];
+
 }
+
+ 
 
 interface RoomCardHorizontalProps {
+
   room: Room;
+
 }
 
+ 
+
 export const RoomCardHorizontal: React.FC<RoomCardHorizontalProps> = ({ room }) => {
+
   const navigate = useNavigate();
+
   const isAvailable = room.status === 'available';
 
+ 
+
   const getTypeLabel = (type: string) => {
+
     const types: Record<string, string> = {
-      single: 'Individual',
-      double: 'Doble',
-      suite: 'Suite Ejecutiva'
+
+      single: 'Habitación Individual',
+
+      double: 'Habitación Doble',
+
+      suite: 'Suite Premium'
+
     };
+
     return types[type] || type;
+
   };
+
+ 
 
   const getRating = () => {
-    // Simulado - en producción vendría de la BD
-    const ratings = { single: 7.8, double: 8.5, suite: 9.2 };
-    return ratings[room.type as keyof typeof ratings] || 8.0;
+
+    const ratings = { single: 4.78, double: 4.85, suite: 4.92 };
+
+    return ratings[room.type as keyof typeof ratings] || 4.80;
+
   };
+
+ 
 
   const getReviewCount = () => {
-    // Simulado
+
     const counts = { single: 156, double: 241, suite: 89 };
+
     return counts[room.type as keyof typeof counts] || 100;
+
   };
+
+ 
 
   const services = [];
+
   if (room.services) {
+
     if (room.services.wifi) services.push({ icon: '📶', label: 'WiFi' });
-    if (room.services.ac) services.push({ icon: '❄️', label: 'A/C' });
+
+    if (room.services.ac) services.push({ icon: '❄️', label: 'Aire' });
+
     if (room.services.tv) services.push({ icon: '📺', label: 'TV' });
+
     if (room.services.minibar) services.push({ icon: '🍷', label: 'Minibar' });
+
     if (room.services.jacuzzi) services.push({ icon: '🛁', label: 'Jacuzzi' });
+
   }
 
-  const imageUrl = room.images && room.images.length > 0 
-    ? room.images[0] 
+ 
+
+  const imageUrl = room.images && room.images.length > 0
+
+    ? room.images[0]
+
     : 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800';
 
+ 
+
   const rating = getRating();
+
   const reviewCount = getReviewCount();
 
-  const getRatingLabel = (score: number) => {
-    if (score >= 9) return 'Excelente';
-    if (score >= 8) return 'Muy bueno';
-    if (score >= 7) return 'Bueno';
-    return 'Agradable';
-  };
+ 
 
   return (
+
     <div
+
       style={{
+
         display: 'flex',
+
+        gap: '20px',
+
+        padding: '24px',
+
         backgroundColor: 'white',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        transition: 'all 0.3s',
+
+        borderRadius: 'var(--radius-md)',
+
+        border: '1px solid var(--gray-100)',
+
         cursor: 'pointer',
-        height: '240px',
-        border: '1px solid #e5e7eb'
+
+        transition: 'all 0.2s ease',
+
+        position: 'relative'
+
       }}
+
       onClick={() => navigate(`/rooms/${room.id}`)}
+
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+
+        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+
         e.currentTarget.style.transform = 'translateY(-2px)';
+
       }}
+
       onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+
+        e.currentTarget.style.boxShadow = 'none';
+
         e.currentTarget.style.transform = 'translateY(0)';
+
       }}
+
     >
+
       {/* Imagen */}
-      <div style={{ width: '280px', flexShrink: 0, position: 'relative' }}>
+
+      <div style={{
+
+        width: '300px',
+
+        height: '200px',
+
+        flexShrink: 0,
+
+        position: 'relative',
+
+        borderRadius: 'var(--radius-md)',
+
+        overflow: 'hidden'
+
+      }}>
+
         <img
+
           src={imageUrl}
+
           alt={room.type}
+
           style={{
+
             width: '100%',
+
             height: '100%',
-            objectFit: 'cover'
+
+            objectFit: 'cover',
+
+            transition: 'transform 0.3s ease'
+
           }}
+
           onError={(e) => {
+
             e.currentTarget.src = 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800';
+
           }}
+
+          onMouseEnter={(e) => {
+
+            e.currentTarget.style.transform = 'scale(1.05)';
+
+          }}
+
+          onMouseLeave={(e) => {
+
+            e.currentTarget.style.transform = 'scale(1)';
+
+          }}
+
         />
-        {room.type === 'suite' && (
+
+        {!isAvailable && (
+
           <div style={{
+
             position: 'absolute',
+
             top: '12px',
+
             left: '12px',
-            backgroundColor: '#10b981',
+
+            backgroundColor: 'var(--gray-600)',
+
             color: 'white',
-            padding: '0.375rem 0.75rem',
-            borderRadius: '6px',
-            fontSize: '0.75rem',
+
+            padding: '6px 12px',
+
+            borderRadius: 'var(--radius-sm)',
+
+            fontSize: '13px',
+
             fontWeight: '600'
+
           }}>
-            Premium
+
+            No disponible
+
           </div>
+
         )}
+
       </div>
 
-      {/* Información */}
-      <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1 }}>
-          {/* Tipo de habitación */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+ 
+
+      {/* Contenido */}
+
+      <div style={{
+
+        flex: 1,
+
+        display: 'flex',
+
+        flexDirection: 'column',
+
+        justifyContent: 'space-between'
+
+      }}>
+
+        {/* Superior */}
+
+        <div>
+
+          {/* Tipo y Rating */}
+
+          <div style={{
+
+            display: 'flex',
+
+            alignItems: 'center',
+
+            justifyContent: 'space-between',
+
+            marginBottom: '8px'
+
+          }}>
+
             <span style={{
-              fontSize: '0.75rem',
+
+              fontSize: '13px',
+
               fontWeight: '600',
-              color: '#2563eb',
-              backgroundColor: '#eff6ff',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '4px'
+
+              color: 'var(--gray-500)',
+
+              textTransform: 'uppercase',
+
+              letterSpacing: '0.5px'
+
             }}>
+
               {getTypeLabel(room.type)}
+
             </span>
-            {!isAvailable && (
+
+            <div style={{
+
+              display: 'flex',
+
+              alignItems: 'center',
+
+              gap: '4px'
+
+            }}>
+
+              <span style={{ fontSize: '14px' }}>⭐</span>
+
               <span style={{
-                fontSize: '0.75rem',
+
+                fontSize: '15px',
+
                 fontWeight: '600',
-                color: '#dc2626',
-                backgroundColor: '#fee2e2',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px'
+
+                color: 'var(--gray-600)'
+
               }}>
-                No disponible
+
+                {rating}
+
               </span>
-            )}
+
+              <span style={{
+
+                fontSize: '14px',
+
+                color: 'var(--gray-400)'
+
+              }}>
+
+                ({reviewCount})
+
+              </span>
+
+            </div>
+
           </div>
 
-          {/* Nombre */}
+ 
+
+          {/* Título */}
+
           <h3 style={{
-            fontSize: '1.25rem',
-            fontWeight: 'bold',
-            color: '#111827',
-            margin: '0 0 0.5rem 0'
+
+            fontSize: '20px',
+
+            fontWeight: '600',
+
+            color: 'var(--gray-600)',
+
+            margin: '0 0 12px 0',
+
+            letterSpacing: '-0.3px'
+
           }}>
+
             Habitación {room.code}
+
           </h3>
 
+ 
+
           {/* Descripción */}
+
           <p style={{
-            fontSize: '0.875rem',
-            color: '#6b7280',
-            margin: '0 0 1rem 0',
+
+            fontSize: '15px',
+
+            color: 'var(--gray-500)',
+
+            margin: '0 0 16px 0',
+
             lineHeight: '1.5',
+
             display: '-webkit-box',
+
             WebkitLineClamp: 2,
+
             WebkitBoxOrient: 'vertical',
+
             overflow: 'hidden'
+
           }}>
+
             {room.description}
+
           </p>
 
+ 
+
           {/* Capacidad */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <span style={{ fontSize: '1rem' }}>👥</span>
-            <span style={{ fontSize: '0.875rem', color: '#374151' }}>
-              {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
-            </span>
+
+          <div style={{
+
+            display: 'flex',
+
+            alignItems: 'center',
+
+            gap: '6px',
+
+            marginBottom: '12px',
+
+            color: 'var(--gray-500)',
+
+            fontSize: '15px'
+
+          }}>
+
+            <span>👥</span>
+
+            <span>{room.capacity} {room.capacity === 1 ? 'huésped' : 'huéspedes'}</span>
+
           </div>
+
+ 
 
           {/* Servicios */}
+
           {services.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-              {services.slice(0, 4).map((service, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                    fontSize: '0.8rem',
-                    color: '#6b7280',
-                    backgroundColor: '#f9fafb',
-                    padding: '0.375rem 0.625rem',
-                    borderRadius: '6px'
-                  }}
-                >
-                  <span>{service.icon}</span>
-                  <span>{service.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Precio y Rating */}
-      <div style={{
-        width: '200px',
-        flexShrink: 0,
-        padding: '1.5rem',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        borderLeft: '1px solid #e5e7eb'
-      }}>
-        {/* Rating */}
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-            <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#111827' }}>
-                {getRatingLabel(rating)}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#6b7280' }}>
-                {reviewCount} opiniones
-              </div>
-            </div>
             <div style={{
-              backgroundColor: '#2563eb',
-              color: 'white',
-              padding: '0.5rem 0.625rem',
-              borderRadius: '6px',
-              fontSize: '0.95rem',
-              fontWeight: 'bold'
+
+              display: 'flex',
+
+              gap: '16px',
+
+              flexWrap: 'wrap',
+
+              marginBottom: '16px'
+
             }}>
-              {rating}
+
+              {services.slice(0, 5).map((service, idx) => (
+
+                <div
+
+                  key={idx}
+
+                  style={{
+
+                    display: 'flex',
+
+                    alignItems: 'center',
+
+                    gap: '6px',
+
+                    fontSize: '14px',
+
+                    color: 'var(--gray-500)'
+
+                  }}
+
+                >
+
+                  <span style={{ fontSize: '16px' }}>{service.icon}</span>
+
+                  <span>{service.label}</span>
+
+                </div>
+
+              ))}
+
             </div>
-          </div>
+
+          )}
+
         </div>
 
-        {/* Precio */}
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
-            Desde
+ 
+
+        {/* Inferior - Precio */}
+
+        <div style={{
+
+          display: 'flex',
+
+          alignItems: 'flex-end',
+
+          justifyContent: 'space-between',
+
+          borderTop: '1px solid var(--gray-100)',
+
+          paddingTop: '16px'
+
+        }}>
+
+          <div>
+
+            <div style={{
+
+              display: 'flex',
+
+              alignItems: 'baseline',
+
+              gap: '6px'
+
+            }}>
+
+              <span style={{
+
+                fontSize: '22px',
+
+                fontWeight: '600',
+
+                color: 'var(--gray-600)'
+
+              }}>
+
+                S/ {room.price_per_night}
+
+              </span>
+
+              <span style={{
+
+                fontSize: '15px',
+
+                color: 'var(--gray-400)'
+
+              }}>
+
+                / noche
+
+              </span>
+
+            </div>
+
           </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.25rem' }}>
-            S/ {room.price_per_night}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '1rem' }}>
-            por noche
-          </div>
+
+ 
 
           <button
+
             onClick={(e) => {
+
               e.stopPropagation();
+
               navigate(`/rooms/${room.id}`);
+
             }}
+
             disabled={!isAvailable}
+
             style={{
-              width: '100%',
-              padding: '0.75rem 1rem',
-              backgroundColor: isAvailable ? '#2563eb' : '#9ca3af',
-              color: 'white',
+
+              padding: '10px 24px',
+
+              backgroundColor: isAvailable ? 'var(--gray-600)' : 'var(--gray-200)',
+
+              color: isAvailable ? 'white' : 'var(--gray-400)',
+
               border: 'none',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
+
+              borderRadius: 'var(--radius-sm)',
+
+              fontSize: '15px',
+
               fontWeight: '600',
+
               cursor: isAvailable ? 'pointer' : 'not-allowed',
-              transition: 'background-color 0.2s'
+
+              transition: 'all 0.2s'
+
             }}
+
             onMouseEnter={(e) => {
-              if (isAvailable) e.currentTarget.style.backgroundColor = '#1d4ed8';
+
+              if (isAvailable) {
+
+                e.currentTarget.style.backgroundColor = 'var(--gray-500)';
+
+                e.currentTarget.style.transform = 'scale(1.02)';
+
+              }
+
             }}
+
             onMouseLeave={(e) => {
-              if (isAvailable) e.currentTarget.style.backgroundColor = '#2563eb';
+
+              if (isAvailable) {
+
+                e.currentTarget.style.backgroundColor = 'var(--gray-600)';
+
+                e.currentTarget.style.transform = 'scale(1)';
+
+              }
+
             }}
+
           >
+
             Ver detalles
+
           </button>
+
         </div>
+
       </div>
+
     </div>
+
   );
+
 };

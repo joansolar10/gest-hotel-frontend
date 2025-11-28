@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { Button } from '../components/ui/button';
+import { ChevronDownIcon } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 
@@ -32,6 +40,13 @@ export const AdminRoomsPage: React.FC = () => {
     amenities: [] as string[]
   });
 
+  const statusOptions = [
+    { value: 'available', label: 'Disponible' },
+    { value: 'occupied', label: 'Ocupada' },
+    { value: 'maintenance', label: 'Mantenimiento' },
+    { value: 'cleaning', label: 'Limpieza' }
+  ];
+
   useEffect(() => {
     if (!isAdmin) {
       toast.error('Acceso denegado');
@@ -42,15 +57,15 @@ export const AdminRoomsPage: React.FC = () => {
   }, [isAdmin]);
 
   const loadRooms = async () => {
-  try {
-    const { data } = await api.get('/api/v1/admin/rooms');
-    setRooms(data.rooms || []);
-  } catch (error) {
-    toast.error('Error al cargar habitaciones');
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const { data } = await api.get('/api/v1/admin/rooms');
+      setRooms(data.rooms || []);
+    } catch (error) {
+      toast.error('Error al cargar habitaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,78 +133,244 @@ export const AdminRoomsPage: React.FC = () => {
     };
     const style = styles[status] || { bg: '#f3f4f6', color: '#374151', text: status };
     return (
-      <span style={{ backgroundColor: style.bg, color: style.color, padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600' }}>
+      <span style={{
+        backgroundColor: style.bg,
+        color: style.color,
+        padding: '4px 12px',
+        borderRadius: '12px',
+        fontSize: '13px',
+        fontWeight: '600'
+      }}>
         {style.text}
       </span>
     );
   };
 
+  const getStatusLabel = (status: string) => {
+    const option = statusOptions.find(opt => opt.value === status);
+    return option ? option.label : status;
+  };
+
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <div style={{ backgroundColor: '#1f2937', color: 'white', padding: '1.5rem 0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button onClick={() => navigate('/admin')} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>←</button>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', margin: 0 }}>Gestión de Habitaciones</h1>
+    <div style={{ minHeight: 'calc(100vh - 64px)', backgroundColor: 'var(--gray-50)', padding: '40px 24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => navigate('/admin')}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                border: '1px solid var(--gray-200)',
+                backgroundColor: 'white',
+                color: 'var(--gray-600)',
+                fontSize: '20px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+            >
+              ←
+            </button>
+            <div>
+              <h1 style={{
+                fontSize: '28px',
+                fontWeight: '700',
+                margin: '0 0 4px 0',
+                color: 'var(--gray-600)',
+                letterSpacing: '-0.5px'
+              }}>
+                Gestión de Habitaciones
+              </h1>
+              <p style={{ margin: 0, color: 'var(--gray-400)', fontSize: '15px' }}>
+                Administra las habitaciones del hotel
+              </p>
+            </div>
           </div>
-          <button
+          <Button
             onClick={() => { resetForm(); setShowModal(true); }}
-            style={{ padding: '0.5rem 1rem', backgroundColor: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}
+            style={{
+              backgroundColor: '#10b981',
+              color: 'white',
+              fontWeight: '600',
+              padding: '12px 24px'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
           >
             + Nueva Habitación
-          </button>
+          </Button>
         </div>
-      </div>
 
-      <div style={{ maxWidth: '1200px', margin: '2rem auto', padding: '0 1rem' }}>
+        {/* Grid de habitaciones */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem' }}>Cargando...</div>
+          <div style={{
+            padding: '60px',
+            textAlign: 'center',
+            color: 'var(--gray-400)',
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            border: '1px solid var(--gray-200)'
+          }}>
+            <div style={{
+              display: 'inline-block',
+              width: '40px',
+              height: '40px',
+              border: '4px solid var(--gray-100)',
+              borderTopColor: 'var(--gray-600)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <p style={{ marginTop: '16px', fontSize: '15px' }}>Cargando habitaciones...</p>
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
+            gap: '24px'
+          }}>
             {rooms.map((room) => (
-              <div key={room.id} style={{ backgroundColor: 'white', borderRadius: '8px', padding: '1.5rem', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+              <div
+                key={room.id}
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  padding: '24px',
+                  border: '1px solid var(--gray-200)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  transition: 'box-shadow 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'start',
+                  marginBottom: '16px'
+                }}>
                   <div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>{room.code}</h3>
-                    <p style={{ color: '#6b7280', fontSize: '0.875rem', margin: '0.25rem 0 0' }}>{room.type}</p>
+                    <h3 style={{
+                      fontSize: '22px',
+                      fontWeight: '700',
+                      margin: 0,
+                      color: 'var(--gray-600)'
+                    }}>
+                      {room.code}
+                    </h3>
+                    <p style={{
+                      color: 'var(--gray-400)',
+                      fontSize: '14px',
+                      margin: '4px 0 0',
+                      textTransform: 'capitalize'
+                    }}>
+                      {room.type}
+                    </p>
                   </div>
                   {getStatusBadge(room.status)}
                 </div>
 
-                <p style={{ fontSize: '0.875rem', color: '#374151', marginBottom: '1rem' }}>{room.description}</p>
+                <p style={{
+                  fontSize: '14px',
+                  color: 'var(--gray-600)',
+                  marginBottom: '16px',
+                  lineHeight: '1.5'
+                }}>
+                  {room.description}
+                </p>
 
-                <div style={{ fontSize: '0.875rem', marginBottom: '1rem' }}>
-                  <div><strong>Capacidad:</strong> {room.capacity} personas</div>
-                  <div><strong>Precio:</strong> S/ {room.price_per_night}/noche</div>
+                <div style={{
+                  fontSize: '14px',
+                  marginBottom: '20px',
+                  padding: '12px',
+                  backgroundColor: 'var(--gray-50)',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ marginBottom: '6px' }}>
+                    <strong style={{ color: 'var(--gray-600)' }}>Capacidad:</strong>
+                    <span style={{ color: 'var(--gray-500)', marginLeft: '8px' }}>
+                      {room.capacity} {room.capacity === 1 ? 'persona' : 'personas'}
+                    </span>
+                  </div>
+                  <div>
+                    <strong style={{ color: 'var(--gray-600)' }}>Precio:</strong>
+                    <span style={{ color: 'var(--gray-500)', marginLeft: '8px' }}>
+                      S/ {room.price_per_night.toFixed(2)}/noche
+                    </span>
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: '500', display: 'block', marginBottom: '0.25rem' }}>Cambiar estado:</label>
-                  <select
-                    value={room.status}
-                    onChange={(e) => handleStatusChange(room.id, e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px', fontSize: '0.875rem' }}
-                  >
-                    <option value="available">Disponible</option>
-                    <option value="occupied">Ocupada</option>
-                    <option value="maintenance">Mantenimiento</option>
-                    <option value="cleaning">Limpieza</option>
-                  </select>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    display: 'block',
+                    marginBottom: '8px',
+                    color: 'var(--gray-600)'
+                  }}>
+                    Cambiar estado:
+                  </label>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger>
+                      <Button
+                        variant="outline"
+                        style={{
+                          width: '100%',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <span>{getStatusLabel(room.status)}</span>
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          size={16}
+                          style={{ opacity: 0.6 }}
+                        />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      {statusOptions.map((option) => (
+                        <DropdownMenuItem
+                          key={option.value}
+                          onClick={() => handleStatusChange(room.id, option.value)}
+                        >
+                          {option.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button
                     onClick={() => openEditModal(room)}
-                    style={{ flex: 1, padding: '0.5rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem' }}
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#2563eb',
+                      color: 'white',
+                      fontWeight: '600'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                   >
                     Editar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => handleDelete(room.id)}
-                    style={{ flex: 1, padding: '0.5rem', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem' }}
+                    variant="destructive"
+                    style={{ flex: 1 }}
                   >
                     Eliminar
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -199,87 +380,261 @@ export const AdminRoomsPage: React.FC = () => {
 
       {/* Modal */}
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '2rem', width: '90%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            backdropFilter: 'blur(4px)'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '32px',
+              width: '90%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)'
+            }}
+          >
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '24px',
+              color: 'var(--gray-600)'
+            }}>
               {editingRoom ? 'Editar Habitación' : 'Nueva Habitación'}
             </h2>
 
             <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Código</label>
+              {/* Código */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  color: 'var(--gray-600)'
+                }}>
+                  Código <span style={{ color: '#EF4444' }}>*</span>
+                </label>
                 <input
                   type="text"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                   required
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                  placeholder="Ej: 101"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    fontSize: '15px',
+                    color: 'var(--gray-600)',
+                    backgroundColor: 'white',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
                 />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Tipo</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
-                >
-                  <option value="single">Individual</option>
-                  <option value="double">Doble</option>
-                  <option value="suite">Suite</option>
-                </select>
+              {/* Tipo con Dropdown */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  color: 'var(--gray-600)'
+                }}>
+                  Tipo
+                </label>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      style={{
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        padding: '10px 12px',
+                        fontSize: '15px'
+                      }}
+                    >
+                      <span style={{ textTransform: 'capitalize' }}>
+                        {formData.type === 'single' ? 'Individual' : formData.type === 'double' ? 'Doble' : 'Suite'}
+                      </span>
+                      <ChevronDownIcon
+                        aria-hidden="true"
+                        size={16}
+                        style={{ opacity: 0.6 }}
+                      />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setFormData({ ...formData, type: 'single' })}>
+                      Individual
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFormData({ ...formData, type: 'double' })}>
+                      Doble
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFormData({ ...formData, type: 'suite' })}>
+                      Suite
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Descripción</label>
+              {/* Descripción con Textarea */}
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  marginBottom: '8px',
+                  color: 'var(--gray-600)'
+                }}>
+                  Descripción
+                </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px', resize: 'vertical' }}
+                  maxLength={500}
+                  placeholder="Describe la habitación..."
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    resize: 'vertical',
+                    fontSize: '15px',
+                    color: 'var(--gray-600)',
+                    backgroundColor: 'white',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    transition: 'border-color 0.2s'
+                  }}
+                  onFocus={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                  onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
                 />
+                <p style={{
+                  fontSize: '13px',
+                  color: 'var(--gray-400)',
+                  marginTop: '6px'
+                }}>
+                  Escribe una breve descripción. Máximo 500 caracteres.
+                </p>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Capacidad y Precio */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px',
+                marginBottom: '20px'
+              }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Capacidad</label>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'var(--gray-600)'
+                  }}>
+                    Capacidad <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
                   <input
                     type="number"
                     min="1"
                     value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
                     required
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                    placeholder="1"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '15px',
+                      color: 'var(--gray-600)',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.25rem' }}>Precio/noche (S/)</label>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    marginBottom: '8px',
+                    color: 'var(--gray-600)'
+                  }}>
+                    Precio/noche (S/) <span style={{ color: '#EF4444' }}>*</span>
+                  </label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={formData.price_per_night}
-                    onChange={(e) => setFormData({ ...formData, price_per_night: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, price_per_night: parseFloat(e.target.value) || 0 })}
                     required
-                    style={{ width: '100%', padding: '0.5rem', border: '1px solid #d1d5db', borderRadius: '4px' }}
+                    placeholder="0.00"
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '6px',
+                      fontSize: '15px',
+                      color: 'var(--gray-600)',
+                      backgroundColor: 'white',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.currentTarget.style.borderColor = '#9ca3af'}
+                    onBlur={(e) => e.currentTarget.style.borderColor = '#d1d5db'}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button
+              {/* Botones */}
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setShowModal(false)}
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: '#6b7280', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  style={{ flex: 1 }}
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  style={{ flex: 1, padding: '0.75rem', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#2563eb',
+                    color: 'white'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
                 >
                   {editingRoom ? 'Actualizar' : 'Crear'}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

@@ -1,37 +1,59 @@
 import React, { useState } from 'react';
+import { RangeCalendar } from './ui/calendar-rac';
+import { getLocalTimeZone, today } from '@internationalized/date';
+import type { DateRange } from 'react-aria-components';
+import { ChevronDownIcon, Wifi, AirVent, Tv, Wine, Bath } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from './ui/dropdown-menu';
+import { Button } from './ui/button';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { Checkbox } from './ui/checkbox';
 
 interface FilterSidebarProps {
   onFilterChange: (filters: any) => void;
 }
 
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({ onFilterChange }) => {
+  const now = today(getLocalTimeZone());
+  
+  const [dateRange, setDateRange] = useState<DateRange | null>({
+    start: now,
+    end: now.add({ days: 1 })
+  });
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [selectedRating, setSelectedRating] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
 
   const handleApplyFilters = () => {
     const filters: any = {};
-    
-    if (checkIn) filters.check_in = checkIn;
-    if (checkOut) filters.check_out = checkOut;
+
+    if (dateRange?.start && dateRange?.end) {
+      filters.check_in = dateRange.start.toString();
+      filters.check_out = dateRange.end.toString();
+    }
     if (guests) filters.guests = guests;
     if (selectedType) filters.type = selectedType;
     if (priceRange.max < 1000) filters.max_price = priceRange.max;
-    
+
     onFilterChange(filters);
   };
 
   const handleClearFilters = () => {
+    setDateRange({
+      start: now,
+      end: now.add({ days: 1 })
+    });
     setPriceRange({ min: 0, max: 1000 });
     setSelectedRating('');
     setSelectedType('');
     setSelectedServices([]);
-    setCheckIn('');
-    setCheckOut('');
     setGuests(1);
     onFilterChange({});
   };
@@ -42,188 +64,335 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({ onFilterChange }) 
     );
   };
 
+  const guestOptions = [
+    { value: 1, label: '1 Huésped' },
+    { value: 2, label: '2 Huéspedes' },
+    { value: 3, label: '3 Huéspedes' },
+    { value: 4, label: '4 Huéspedes' },
+  ];
+
+  const roomTypes = [
+    { value: '', label: 'Todas' },
+    { value: 'single', label: 'Individual' },
+    { value: 'double', label: 'Doble' },
+    { value: 'suite', label: 'Suite' }
+  ];
+
+  const services = [
+    { value: 'wifi', label: 'WiFi', icon: Wifi },
+    { value: 'ac', label: 'Aire acondicionado', icon: AirVent },
+    { value: 'tv', label: 'Televisión', icon: Tv },
+    { value: 'minibar', label: 'Minibar', icon: Wine },
+    { value: 'jacuzzi', label: 'Jacuzzi', icon: Bath }
+  ];
+
+  const typeId = React.useId();
+
   return (
     <div style={{
-      width: '280px',
-      backgroundColor: 'white',
-      borderRadius: '12px',
-      padding: '1.5rem',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+      width: '320px',
+      flexShrink: 0,
       position: 'sticky',
       top: '100px',
       maxHeight: 'calc(100vh - 120px)',
       overflowY: 'auto'
     }}>
-      <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#111827' }}>
-        Buscar
-      </h3>
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: 'var(--radius-lg)',
+        border: '1px solid var(--gray-100)',
+        padding: '32px',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        <h3 style={{
+          fontSize: '22px',
+          fontWeight: '600',
+          marginBottom: '32px',
+          color: 'var(--gray-600)',
+          letterSpacing: '-0.3px'
+        }}>
+          Filtros
+        </h3>
 
-      {/* Fechas */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
-          Check-in
-        </label>
-        <input
-          type="date"
-          value={checkIn}
-          onChange={(e) => setCheckIn(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            fontSize: '0.875rem'
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
-          Check-out
-        </label>
-        <input
-          type="date"
-          value={checkOut}
-          onChange={(e) => setCheckOut(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            fontSize: '0.875rem'
-          }}
-        />
-      </div>
-
-      <div style={{ marginBottom: '1.5rem' }}>
-        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '0.5rem', color: '#374151' }}>
-          Huéspedes
-        </label>
-        <select
-          value={guests}
-          onChange={(e) => setGuests(Number(e.target.value))}
-          style={{
-            width: '100%',
-            padding: '0.625rem',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            fontSize: '0.875rem'
-          }}
-        >
-          <option value={1}>1 Adulto</option>
-          <option value={2}>2 Adultos</option>
-          <option value={3}>3 Adultos</option>
-          <option value={4}>4 Adultos</option>
-        </select>
-      </div>
-
-      <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
-
-      {/* Tipo de habitación */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#111827' }}>
-          Tipo de habitación
-        </h4>
-        {[
-          { value: '', label: 'Todas' },
-          { value: 'single', label: 'Individual' },
-          { value: 'double', label: 'Doble' },
-          { value: 'suite', label: 'Suite' }
-        ].map((type) => (
-          <label key={type.value} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="radio"
-              checked={selectedType === type.value}
-              onChange={() => setSelectedType(type.value)}
-              style={{ marginRight: '0.5rem' }}
-            />
-            <span style={{ fontSize: '0.875rem', color: '#374151' }}>{type.label}</span>
+        {/* Fechas con calendario de rango */}
+        <div style={{ marginBottom: '32px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: '600',
+            marginBottom: '12px',
+            color: 'var(--gray-600)'
+          }}>
+            Fechas
           </label>
-        ))}
-      </div>
 
-      <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
-
-      {/* Precio */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-          <h4 style={{ fontSize: '0.95rem', fontWeight: '600', color: '#111827' }}>Precio</h4>
-          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>S/ 0 - {priceRange.max}</span>
+          <div style={{
+            backgroundColor: '#f9fafb',
+            padding: '16px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--gray-200)'
+          }}>
+            <RangeCalendar
+              value={dateRange}
+              onChange={setDateRange}
+              minValue={now}
+            />
+          </div>
         </div>
-        <input
-          type="range"
-          min="0"
-          max="1000"
-          step="50"
-          value={priceRange.max}
-          onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
-          style={{ width: '100%' }}
-        />
-      </div>
 
-      <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #e5e7eb' }} />
+        <div style={{
+          height: '1px',
+          backgroundColor: 'var(--gray-100)',
+          margin: '24px 0'
+        }} />
 
-      {/* Servicios */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h4 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#111827' }}>
-          Servicios
-        </h4>
-        {[
-          { value: 'wifi', label: 'WiFi', icon: '📶' },
-          { value: 'ac', label: 'Aire acondicionado', icon: '❄️' },
-          { value: 'tv', label: 'TV', icon: '📺' },
-          { value: 'minibar', label: 'Minibar', icon: '🍷' },
-          { value: 'jacuzzi', label: 'Jacuzzi', icon: '🛁' }
-        ].map((service) => (
-          <label key={service.value} style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={selectedServices.includes(service.value)}
-              onChange={() => toggleService(service.value)}
-              style={{ marginRight: '0.5rem' }}
-            />
-            <span style={{ marginRight: '0.5rem' }}>{service.icon}</span>
-            <span style={{ fontSize: '0.875rem', color: '#374151' }}>{service.label}</span>
+        {/* Huéspedes con Dropdown */}
+        <div style={{ marginBottom: '32px' }}>
+          <label style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: '600',
+            marginBottom: '12px',
+            color: 'var(--gray-600)'
+          }}>
+            Huéspedes
           </label>
-        ))}
-      </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <Button
+                variant="outline"
+                style={{
+                  width: '100%',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  fontSize: '15px'
+                }}
+              >
+                <span>{guestOptions.find(opt => opt.value === guests)?.label || '1 Huésped'}</span>
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  size={16}
+                  style={{ opacity: 0.6 }}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {guestOptions.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => setGuests(option.value)}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
-      {/* Botones */}
-      <div style={{ display: 'flex', gap: '0.5rem' }}>
-        <button
-          onClick={handleApplyFilters}
-          style={{
-            flex: 1,
-            padding: '0.75rem',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
+        <div style={{
+          height: '1px',
+          backgroundColor: 'var(--gray-100)',
+          margin: '24px 0'
+        }} />
+
+        {/* Tipo de habitación con RadioGroup */}
+        <div style={{ marginBottom: '32px' }}>
+          <h4 style={{
+            fontSize: '14px',
             fontWeight: '600',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1d4ed8'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-        >
-          Buscar
-        </button>
-        <button
-          onClick={handleClearFilters}
-          style={{
-            padding: '0.75rem',
-            backgroundColor: 'white',
-            color: '#6b7280',
-            border: '1px solid #d1d5db',
-            borderRadius: '6px',
-            fontSize: '0.875rem',
+            marginBottom: '16px',
+            color: 'var(--gray-600)'
+          }}>
+            Tipo de habitación
+          </h4>
+          
+          <RadioGroup
+            value={selectedType}
+            onValueChange={setSelectedType}
+          >
+            {roomTypes.map((type, index) => (
+              <div
+                key={type.value}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+              >
+                <RadioGroupItem
+                  value={type.value}
+                  id={`${typeId}-${index}`}
+                />
+                <Label
+                  htmlFor={`${typeId}-${index}`}
+                  style={{
+                    fontSize: '15px',
+                    color: 'var(--gray-600)',
+                    fontWeight: selectedType === type.value ? '600' : '400',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {type.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        <div style={{
+          height: '1px',
+          backgroundColor: 'var(--gray-100)',
+          margin: '24px 0'
+        }} />
+
+        {/* Precio */}
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '16px'
+          }}>
+            <h4 style={{
+              fontSize: '14px',
+              fontWeight: '600',
+              color: 'var(--gray-600)'
+            }}>
+              Rango de precio
+            </h4>
+            <span style={{
+              fontSize: '15px',
+              fontWeight: '600',
+              color: 'var(--gray-600)'
+            }}>
+              S/ {priceRange.max}
+            </span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="1000"
+            step="50"
+            value={priceRange.max}
+            onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
+            style={{
+              width: '100%',
+              height: '4px',
+              borderRadius: '2px',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          />
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginTop: '8px',
+            fontSize: '13px',
+            color: 'var(--gray-400)'
+          }}>
+            <span>S/ 0</span>
+            <span>S/ 1000+</span>
+          </div>
+        </div>
+
+        <div style={{
+          height: '1px',
+          backgroundColor: 'var(--gray-100)',
+          margin: '24px 0'
+        }} />
+
+        {/* Servicios */}
+        <div style={{ marginBottom: '32px' }}>
+          <h4 style={{
+            fontSize: '14px',
             fontWeight: '600',
-            cursor: 'pointer'
-          }}
-        >
-          Limpiar
-        </button>
+            marginBottom: '16px',
+            color: 'var(--gray-600)'
+          }}>
+            Servicios
+          </h4>
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}>
+            {services.map((service) => {
+              const serviceId = `service-${service.value}`;
+              const isChecked = selectedServices.includes(service.value);
+              const IconComponent = service.icon;
+
+              return (
+                <label
+                  key={service.value}
+                  htmlFor={serviceId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    cursor: 'pointer',
+                    padding: '6px 8px',
+                    borderRadius: 'var(--radius-sm)',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--gray-50)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div style={{ flexShrink: 0 }}>
+                    <Checkbox
+                      id={serviceId}
+                      checked={isChecked}
+                      onChange={() => toggleService(service.value)}
+                      style={{
+                        width: '16px',
+                        height: '16px'
+                      }}
+                    />
+                  </div>
+                  <IconComponent
+                    size={18}
+                    style={{
+                      flexShrink: 0,
+                      color: isChecked ? '#111827' : '#6B7280'
+                    }}
+                  />
+                  <span style={{
+                    fontSize: '14px',
+                    color: 'var(--gray-600)',
+                    fontWeight: isChecked ? '600' : '400'
+                  }}>
+                    {service.label}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Botones */}
+        <div style={{
+          display: 'grid',
+          gap: '12px',
+          marginTop: '32px'
+        }}>
+          <Button
+            onClick={handleApplyFilters}
+            style={{
+              width: '100%'
+            }}
+          >
+            Aplicar filtros
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            style={{
+              width: '100%'
+            }}
+          >
+            Limpiar todo
+          </Button>
+        </div>
       </div>
     </div>
   );

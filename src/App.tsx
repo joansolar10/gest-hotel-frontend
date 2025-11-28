@@ -1,44 +1,60 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
 import { AuthProvider } from './context/AuthContext';
+
 import { ProtectedRoute } from './components/ProtectedRoute';
+
 import { DNIProtectedRoute } from './components/DNIProtectedRoute';
+
 import { Navbar } from './components/Navbar';
-import { Sidebar } from './components/Sidebar';
+
+ 
 
 // Pages
+
 import { LoginPage } from './pages/LoginPage';
+
 import { RoomsPage } from './pages/RoomsPage';
+
 import { MyReservationsPage } from './pages/MyReservationsPage';
+
 import { RoomDetailPage } from './pages/RoomDetailPage';
+
 import { NewReservationPage } from './pages/NewReservationPage';
+
 import { PaymentPage } from './pages/PaymentPage';
+
 import { ConfirmationPage } from './pages/ConfirmationPage';
+
 import { DNIVerificationPage } from './pages/DNIVerificationPage';
+
 import { ContactPage } from './pages/ContactPage';
+
 import { AboutPage } from './pages/AboutPage';
+
 import { ProfilePage } from './pages/ProfilePage';
+
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+
 import { AdminReservationsPage } from './pages/AdminReservationsPage';
+
 import { AdminRoomsPage } from './pages/AdminRoomsPage';
 
+ 
+
 const AppContent = () => {
-  const location = useLocation();
-  
-  // Rutas donde NO mostrar la sidebar
-  const hideSidebarRoutes = ['/login', '/verify-dni'];
-  const showSidebar = !hideSidebarRoutes.includes(location.pathname);
 
   return (
+
     <>
+
       <Navbar />
-      {showSidebar && <Sidebar />}
-      
-      <div style={{ 
-        marginLeft: showSidebar ? '54px' : '0',
-        transition: 'margin-left 0.3s ease',
-        minHeight: 'calc(100vh - 70px)',
-        paddingLeft: '0'
+
+ 
+
+      <div style={{
+
+        minHeight: 'calc(100vh - 80px)'
       }}>
         <Routes>
           {/* RUTAS PÚBLICAS */}
